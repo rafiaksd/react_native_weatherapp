@@ -154,7 +154,7 @@ export default function HomeScreen() {
 
               <View className='flex-row space-x-2 items-center'>
                 <Image source={require('../assets/icons/pm2_5_nose_icon.png')} className='h-6 w-6' />
-                <Text className='text-white font-semibold text-base'> PM2.5: {current?.air_quality?.pm2_5}</Text>
+                <Text className='text-white font-semibold text-base'> PM 2.5: {current?.air_quality?.pm2_5}</Text>
               </View>
 
               <View className='flex-row space-x-2 items-center'>
@@ -164,9 +164,8 @@ export default function HomeScreen() {
 
               <View className='flex-row space-x-2 items-center'>
                 <Image source={require('../assets/icons/sun.png')} className='h-6 w-6' />
-                <Text className='text-white font-semibold text-base'> 6:05 AM</Text>
+                <Text className='text-white font-semibold text-base'> {weather?.forecast?.forecastday[0]?.astro?.sunrise}</Text>
               </View>
-
             </View>
 
         </View>

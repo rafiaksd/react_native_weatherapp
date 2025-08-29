@@ -1,6 +1,6 @@
  
 import { debounce } from "lodash";
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { CalendarDaysIcon, MagnifyingGlassIcon } from 'react-native-heroicons/outline';
 import { MapPinIcon } from 'react-native-heroicons/solid';
@@ -8,20 +8,25 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchLocations, fetchWeatherForecast } from '../api/weather';
 import { weatherImages } from '../constants/index';
 import { theme } from '../theme';
+import * as Progress from 'react-native-progress'
 
 export default function HomeScreen() {
   const [showSearch, toggleSearch] = useState(false)
   const [locations, setLocations] = useState([1,2,3])
   const [weather, setWeather] = useState({})
+  const [loading, setLoading] = useState(true)  
 
   const handleLocation = (loc:any)=>{
     console.log('location: '+ loc)
     setLocations([])
 
+    setLoading(true)
+
     fetchWeatherForecast({
       cityName:loc.name, days: '7'
     }).then(data=>{
       setWeather(data)
+      setLoading(false)
       console.log('got forecast: ', data)
     })
   }
@@ -34,6 +39,20 @@ export default function HomeScreen() {
     }
   }
 
+  useEffect(()=>{
+    fetchMyWeatherData()
+  }, [])
+
+  const fetchMyWeatherData = async ()=> {
+    fetchWeatherForecast({
+      cityName: 'Islamabad',
+      days: '7'
+    }).then(data=>{
+      setWeather(data)
+      setLoading(false)
+    })
+  }
+
   const handleTextDebounce = useCallback(debounce(handleSearch, 1200), [])
 
   const {current, location} = weather
@@ -43,8 +62,13 @@ export default function HomeScreen() {
       <Text className="text-4xl font-[#ffccff]">HomeScreen i mean ig a changea</Text>
       <Image blurRadius={70} source={require('../assets/images/bg_dark_blue.jpg')}
       className="absolute h-full w-full" />
-      <SafeAreaView className='flex flex-1'>
 
+      {loading? (
+        <View className="flex-1 flex-row justify-center items-center">
+          <Progress.CircleSnail thickness={10} size={140} color="#0bb3b2" />
+        </View>
+      ):(
+        <SafeAreaView className='flex flex-1'>
         {/*search section*/}
         <View style={{height:'7%'}} className='mx-4 relative z-50'>
           <View className='flex-row justify-end items-center rounded-full' style={{backgroundColor: showSearch? theme.bgWhite(0.2): 'transparent'}}>
@@ -151,61 +175,31 @@ export default function HomeScreen() {
           contentContainerStyle={{paddingHorizontal: 15}}
           showsHorizontalScrollIndicator={false}
         >
-          <View className='flex justify-center items-center w-24 rounded-3xl py-3 space-y-1 mr-4' style={{backgroundColor: theme.bgWhite(0.15)}}>
-            <Image source={require('../assets/images/heavyrain.png')}
-            className='h-11 w-11'/>
-            <Text className='text-white'>Monday</Text>
-            <Text className='text-white text-xl font-semibold'>13&#176;</Text>
-          </View>
+          {
+            weather?.forecast?.forecastday?.map((item,index)=>{
+              let date = new Date(item.date)
+              let options = {weekday: 'long'}
+              let dayName = date.toLocaleDateString('en-US', options)
+              dayName = dayName.split(',')[0]
 
-          <View className='flex justify-center items-center w-24 rounded-3xl py-3 space-y-1 mr-4' style={{backgroundColor: theme.bgWhite(0.15)}}>
-            <Image source={require('../assets/images/heavyrain.png')}
-            className='h-11 w-11'/>
-            <Text className='text-white'>Tuesday</Text>
-            <Text className='text-white text-xl font-semibold'>13&#176;</Text>
-          </View>
-
-          <View className='flex justify-center items-center w-24 rounded-3xl py-3 space-y-1 mr-4' style={{backgroundColor: theme.bgWhite(0.15)}}>
-            <Image source={require('../assets/images/heavyrain.png')}
-            className='h-11 w-11'/>
-            <Text className='text-white'>Wednesday</Text>
-            <Text className='text-white text-xl font-semibold'>13&#176;</Text>
-          </View>
-
-          <View className='flex justify-center items-center w-24 rounded-3xl py-3 space-y-1 mr-4' style={{backgroundColor: theme.bgWhite(0.15)}}>
-            <Image source={require('../assets/images/heavyrain.png')}
-            className='h-11 w-11'/>
-            <Text className='text-white'>Thursday</Text>
-            <Text className='text-white text-xl font-semibold'>13&#176;</Text>
-          </View>
-
-          <View className='flex justify-center items-center w-24 rounded-3xl py-3 space-y-1 mr-4' style={{backgroundColor: theme.bgWhite(0.15)}}>
-            <Image source={require('../assets/images/heavyrain.png')}
-            className='h-11 w-11'/>
-            <Text className='text-white'>Friday</Text>
-            <Text className='text-white text-xl font-semibold'>13&#176;</Text>
-          </View>
-
-          
-          <View className='flex justify-center items-center w-24 rounded-3xl py-3 space-y-1 mr-4' style={{backgroundColor: theme.bgWhite(0.15)}}>
-            <Image source={require('../assets/images/heavyrain.png')}
-            className='h-11 w-11'/>
-            <Text className='text-white'>Saturday</Text>
-            <Text className='text-white text-xl font-semibold'>13&#176;</Text>
-          </View>
-
-          <View className='flex justify-center items-center w-24 rounded-3xl py-3 space-y-1 mr-4' style={{backgroundColor: theme.bgWhite(0.15)}}>
-            <Image source={require('../assets/images/heavyrain.png')}
-            className='h-11 w-11'/>
-            <Text className='text-white'>Sunday</Text>
-            <Text className='text-white text-xl font-semibold'>13&#176;</Text>
-          </View>
+              return(
+                <View key={index} className='flex justify-center items-center w-24 rounded-3xl py-3 space-y-1 mr-4' style={{backgroundColor: theme.bgWhite(0.15)}}>
+                  <Image source={weatherImages[item?.day?.condition?.text]}
+                  className='h-11 w-11'/>
+                  <Text className='text-white'>{dayName}</Text>
+                  <Text className='text-white text-xl font-semibold'>{item?.day?.avgtemp_c}&#176;</Text>
+                </View>
+              )
+            })
+          }
 
         </ScrollView>
         </View>
 
 
-      </SafeAreaView>
+      </SafeAreaView>  
+      )}
+
     </View>
   );
 }

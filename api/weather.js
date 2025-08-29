@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const apiKey = '0b81e6e972cb4016954150125252808'
 
-const foreCastEndpoint = params => `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${params.cityName}&days=${params.days}&aqi=no&alerts=no`
+const foreCastEndpoint = params => `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${params.cityName}&days=${params.days}&aqi=yes&alerts=no`
 const locationsEndpoint = params => `https://api.weatherapi.com/v1/search.json?key=${apiKey}&q=${params.cityName}`
 
 const apiCall = async(endpoint)=> {

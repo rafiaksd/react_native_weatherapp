@@ -1,25 +1,42 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 import { debounce } from "lodash";
 import { useCallback, useState } from 'react';
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { CalendarDaysIcon, MagnifyingGlassIcon } from 'react-native-heroicons/outline';
 import { MapPinIcon } from 'react-native-heroicons/solid';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { fetchLocations, fetchWeatherForecast } from '../api/weather';
+import { weatherImages } from '../constants/index';
 import { theme } from '../theme';
 
 export default function HomeScreen() {
   const [showSearch, toggleSearch] = useState(false)
   const [locations, setLocations] = useState([1,2,3])
+  const [weather, setWeather] = useState({})
 
   const handleLocation = (loc:any)=>{
     console.log('location: '+ loc)
+    setLocations([])
+
+    fetchWeatherForecast({
+      cityName:loc.name, days: '7'
+    }).then(data=>{
+      setWeather(data)
+      console.log('got forecast: ', data)
+    })
   }
 
   const handleSearch = value => {
-    console.log('value: ', value)
+    if (value.length>2){
+      fetchLocations({cityName:value}).then(data=>{
+        setLocations(data);
+      })
+    }
   }
 
   const handleTextDebounce = useCallback(debounce(handleSearch, 1200), [])
+
+  const {current, location} = weather
 
   return (
     <View className='flex-1 relative'>
@@ -48,7 +65,7 @@ export default function HomeScreen() {
               locations.length>0 && showSearch? (
                 <View className='absolute w-full bg-gray-300 top-16 rounded-3xl'>
                   {
-                    locations.map((loc,index)=>{
+                    locations.map((loc:any,index)=>{
                       let showBorder = index+1 !== locations.length;
                       let borderClass = showBorder? 'border-b-2 border-b-gray-700': '';
                       return(
@@ -57,7 +74,7 @@ export default function HomeScreen() {
                         key={index}
                         className={"flex-row items-center border-0 p-3 px-4 mb-1 " + borderClass}>
                           <MapPinIcon size='20' color='gray' />
-                          <Text className='text-black text-lg ml-2'>Lond, United Kingdom</Text>
+                          <Text className='text-black text-lg ml-2'>{loc?.name}, {loc?.country}</Text>
                         </TouchableOpacity>
                       )
                     })
@@ -72,16 +89,16 @@ export default function HomeScreen() {
         <View className='mx-4 flex justify-around flex-1 mb-2'>
           {/*location*/}
           <Text className='text-white text-center text-2xl font-bold'>
-            London, 
+            {location?.name}, 
             <Text className='text-lg font-semibold text-gray-300'>
-               United Kingdom
+               {"  "+ location?.country}
             </Text>
           </Text>
 
           {/*weather image*/}
           <View className='flex-row justify-center'>
             <Image
-              source={require('../assets/images/partlycloudy.png')}
+              source={weatherImages[current?.condition?.text]}
               className='w-52 h-52'
             />
           </View>
@@ -89,10 +106,10 @@ export default function HomeScreen() {
           {/*degree celsius*/}
           <View className='space-y-2'>
             <Text className='text-center font-bold text-white text-6xl ml-5'>
-              23&#176;
+              {current?.temp_c}&#176;
             </Text>
             <Text className='text-center font-bold text-white text-2xl ml-5'>
-              Partly cloudy
+              {current?.condition?.text}
             </Text>
           </View>
 
@@ -101,23 +118,22 @@ export default function HomeScreen() {
 
               <View className='flex-row space-x-2 items-center'>
                 <Image source={require('../assets/icons/wind.png')} className='h-6 w-6' />
-                <Text className='text-white font-semibold text-base'>
-                  22km
-                </Text>
+                <Text className='text-white font-semibold text-base'>  {current?.wind_kph} km</Text>
+              </View>
+
+              <View className='flex-row space-x-2 items-center'>
+                <Image source={require('../assets/icons/pm2_5_nose_icon.png')} className='h-6 w-6' />
+                <Text className='text-white font-semibold text-base'> PM2.5: {current?.air_quality?.pm2_5}</Text>
               </View>
 
               <View className='flex-row space-x-2 items-center'>
                 <Image source={require('../assets/icons/drop.png')} className='h-6 w-6' />
-                <Text className='text-white font-semibold text-base'>
-                  23%
-                </Text>
+                <Text className='text-white font-semibold text-base'> {current?.humidity}%</Text>
               </View>
 
               <View className='flex-row space-x-2 items-center'>
                 <Image source={require('../assets/icons/sun.png')} className='h-6 w-6' />
-                <Text className='text-white font-semibold text-base'>
-                  6:05 AM
-                </Text>
+                <Text className='text-white font-semibold text-base'> 6:05 AM</Text>
               </View>
 
             </View>
